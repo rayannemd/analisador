@@ -1,8 +1,7 @@
 import sys
 
 avisos = []
-erros  = []
-
+erros = []
 
 # ANÁLISE LÉXICA
 
@@ -10,7 +9,7 @@ def tokenizar(codigo):
     # percorre o código caractere a caractere e gera a lista de tokens
     # cada token é uma tupla: (tipo, valor, linha)
     tokens = []
-    i      = 0
+    i = 0
     linha  = 1
 
     while i < len(codigo):
@@ -84,18 +83,20 @@ def tokenizar(codigo):
     tokens.append(('EOF', '', linha))
     return tokens
 
-
 # ANÁLISE SINTÁTICA  (Top-Down)
 
-pos    = 0
+pos = 0
 tokens = []
 
 def parar(fase, msg):
-    # registra o erro e encerra o programa imediatamente
-    erros.append(f"Erro — {msg}")
-    print(f"\n  Erro {fase} | {msg}")
-    print("  Execução interrompida no primeiro erro encontrado.")
-    print("=" * 52)
+    # registra o erro e encerra o programa 
+    txt = linhas_do_codigo[linha - 1] if linha <= len(linhas_do_codigo) else ''
+    seta = ' ' * (coluna - 1) + '^'
+ 
+    print(f"\n{tipo} — linha {linha}, coluna {coluna}:")
+    print(f"  {txt}")
+    print(f"  {seta}")
+    print(f"  {msg}\n")
     sys.exit(1)
 
 def atual():
@@ -155,7 +156,7 @@ def pares():
     return lista
 
 def par():
-    
+    # par -> string ':' valor
     tok = atual()
     if tok[0] != 'STRING':
         parar('sintático', f"linha {tok[2]}: chave deve ser string, não '{tok[1]}' ({tok[0]})")
@@ -165,13 +166,12 @@ def par():
     return ('par', chave[1], val)
 
 def valor():
-    
+    # valor da variavel
     tok = atual()
     if tok[0] not in ('STRING', 'INTEIRO', 'REAL', 'BOOLEANO', 'NULO'):
         parar('sintático', f"linha {tok[2]}: valor inválido '{tok[1]}' — use string, inteiro, real, True, False ou None")
     consumir()
     return (tok[0], tok[1])
-
 
 # ANÁLISE SEMÂNTICA
 
@@ -192,54 +192,25 @@ def checar(decls):
             else:
                 chaves_vistas[chave] = linha
 
-
 # EXECUÇÃO
 
 if len(sys.argv) < 2:
     print("Uso: python analisador.py entrada.txt")
     sys.exit(1)
-
+ 
 with open(sys.argv[1], encoding='utf-8') as f:
     codigo = f.read()
-
-print("=" * 52)
-print(f"  Arquivo: {sys.argv[1]}")
-print("=" * 52)
-
-print("\nAnálise Léxica")
-print("-" * 52)
+ 
+linhas_do_codigo = codigo.splitlines()
+ 
 tokens = tokenizar(codigo)
-for tok in tokens:
-    if tok[0] != 'EOF':
-        print(f"  {tok[0]:<10} {repr(tok[1]):<25} linha {tok[2]}")
-total = len([t for t in tokens if t[0] != 'EOF'])
-print(f"\n  OK — {total} tokens gerados")
-
-print("\nAnálise Sintática")
-print("-" * 52)
-pos = 0
-ast = programa()
-print(f"  OK — {len(ast)} declaração(ões) reconhecida(s)")
-for _, nome, dic, linha in ast:
-    print(f"\n  {nome} (linha {linha}) — {len(dic[1])} par(es):")
-    for _, chave, val in dic[1]:
-        print(f"    {chave!r:<20} : {val[1]!r} ({val[0].lower()})")
-
-print("\nAnálise Semântica")
-print("-" * 52)
+pos    = 0
+ast    = programa()
 checar(ast)
+ 
 if avisos:
     for a in avisos:
-        print(f"  Aviso | {a}")
+        print(a)
 else:
-    print("  OK — sem problemas")
-
-# resultado
-print("\n" + "=" * 52)
-if erros:
-    print(f"  RESULTADO: CÓDIGO INVÁLIDO — {len(erros)} erro(s)")
-elif avisos:
-    print(f"  RESULTADO: CÓDIGO VÁLIDO COM {len(avisos)} AVISO(S)")
-else:
-    print("  RESULTADO: CÓDIGO VÁLIDO")
-print("=" * 52)
+    print("CÓDIGO VÁLIDO")
+ 

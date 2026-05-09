@@ -204,8 +204,8 @@ with open(sys.argv[1], encoding='utf-8') as f:
 linhas_do_codigo = codigo.splitlines()
  
 tokens = tokenizar(codigo)
-pos    = 0
-ast    = programa()
+pos = 0
+ast = programa()
 checar(ast)
  
 if avisos:
